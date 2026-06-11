@@ -22,7 +22,7 @@
 ## 설치 방법
 
 ```bash
-npx skills add https://github.com/leeluse/ui-steward --skill design-system-steward
+npx skills add https://github.com/leeluse/design-system-steward --skill design-system-steward
 ```
 
 ## 저장소 구조
