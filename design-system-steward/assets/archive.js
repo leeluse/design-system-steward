@@ -7,6 +7,14 @@
   "use strict";
   const items = [];
   let current = null;
+  let zoomMode = "fit";
+  let zoomLevel = 1.0;
+  const zoomLevels = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
+  let panX = 0;
+  let panY = 0;
+  let isDragging = false;
+  let startX = 0;
+  let startY = 0;
 
   window.Archive = { add: function (c) { c.type = c.type || "component"; items.push(c); } };
 
@@ -18,6 +26,63 @@
     const firstWs = items.find(function (x) { return x.type === "workspace"; });
     if (firstWs) select(firstWs.id); else if (items.length) select(items[0].id);
     setupMeasure();
+    const toggleBtn = document.getElementById("theme-toggle");
+    if (toggleBtn) {
+      toggleBtn.addEventListener("click", function () {
+        const isDark = document.body.classList.toggle("dark");
+        localStorage.setItem("theme", isDark ? "dark" : "light");
+      });
+    }
+
+
+
+    const canvas = document.getElementById("canvas");
+    if (canvas) {
+      canvas.style.cursor = "grab";
+      canvas.addEventListener("mousedown", function (e) {
+        if (e.button !== 0) return;
+        if (e.target.closest("button, a, input, select, textarea")) return;
+        isDragging = true;
+        startX = e.clientX - panX;
+        startY = e.clientY - panY;
+        canvas.style.cursor = "grabbing";
+      });
+
+      window.addEventListener("mousemove", function (e) {
+        if (!isDragging) return;
+        panX = e.clientX - startX;
+        panY = e.clientY - startY;
+        applyZoom();
+      });
+
+      window.addEventListener("mouseup", function () {
+        if (isDragging) {
+          isDragging = false;
+          canvas.style.cursor = "grab";
+        }
+      });
+
+      canvas.addEventListener("wheel", function (e) {
+        if (!e.ctrlKey) return;
+        e.preventDefault();
+        const zoomFactor = 1.1;
+        if (e.deltaY < 0) {
+          if (zoomMode === "fit") {
+            zoomLevel = getAutoScale();
+            zoomMode = "manual";
+          }
+          zoomLevel = Math.min(2.0, zoomLevel * zoomFactor);
+        } else {
+          if (zoomMode === "fit") {
+            zoomLevel = getAutoScale();
+            zoomMode = "manual";
+          }
+          zoomLevel = Math.max(0.2, zoomLevel / zoomFactor);
+        }
+        applyZoom();
+      }, { passive: false });
+    }
+
     window.addEventListener("resize", function () { if (current && current.type === "workspace") fitFrame(); });
   });
 
@@ -64,13 +129,26 @@
     const c = items.find(function (x) { return x.id === id; });
     if (!c) return;
     current = c;
+
+    // Reset panning and zoom level on selecting a new item
+    panX = 0;
+    panY = 0;
+    zoomMode = "fit";
+    const canvas = document.getElementById("canvas");
+    if (canvas) {
+      canvas.style.backgroundPosition = "center center";
+    }
+
     document.querySelectorAll(".list a").forEach(function (a) { a.classList.toggle("active", a.dataset.id === id); });
     document.getElementById("comp-name").textContent = c.name + (c.route ? "  ·  " + c.route : "");
     const badge = document.getElementById("comp-status");
     badge.textContent = c.status || "draft"; badge.dataset.s = c.status || "draft";
 
-    const canvas = document.getElementById("canvas");
-    canvas.classList.toggle("ws", c.type === "workspace");
+    const canvasEl = document.getElementById("canvas");
+    canvasEl.classList.toggle("ws", c.type === "workspace");
+
+    const canvasInner = document.getElementById("canvas-inner");
+    if (!canvasInner) return;
 
     if (c.type === "workspace") {
       /* Inject CSS of components registered in 'uses' → Workspace 'assembles' components */
@@ -78,21 +156,48 @@
         const u = items.find(function (x) { return x.id === uid; });
         return u ? u.css : "";
       }).join("\n");
-      canvas.innerHTML = '<div class="ws-frame" id="ws-frame"><style>' + usedCss + (c.css || "") + "</style>" + c.html + "</div>";
+      canvasInner.innerHTML = '<div class="ws-frame" id="ws-frame"><style>' + usedCss + (c.css || "") + "</style>" + c.html + "</div>";
       fitFrame();
     } else {
-      canvas.innerHTML = "<style>" + (c.css || "") + "</style>" + c.html;
+      canvasInner.innerHTML = "<style>" + (c.css || "") + "</style>" + c.html;
+      fitFrame();
     }
-    renderSpec(c, canvas);
+    renderSpec(c, canvasInner);
+  }
+
+  function getAutoScale() {
+    const canvas = document.getElementById("canvas");
+    if (!canvas) return 1.0;
+    const frame = document.getElementById("ws-frame");
+    if (!frame) return 1.0;
+    const frameWidth = frame.offsetWidth;
+    const frameHeight = frame.offsetHeight;
+    const scaleX = (canvas.clientWidth - 64) / frameWidth;
+    const scaleY = (canvas.clientHeight - 64) / frameHeight;
+    return Math.min(1, scaleX, scaleY);
+  }
+
+  function applyZoom() {
+    const canvas = document.getElementById("canvas");
+    const inner = document.getElementById("canvas-inner");
+    if (!inner) return;
+
+    let scale = 1.0;
+    if (zoomMode === "fit") {
+      scale = getAutoScale();
+    } else {
+      scale = zoomLevel;
+    }
+
+    inner.style.transform = "translate(-50%, -50%) translate(" + panX + "px, " + panY + "px) scale(" + scale + ")";
+
+    if (canvas) {
+      canvas.style.backgroundPosition = "calc(50% + " + panX + "px) calc(50% + " + panY + "px)";
+    }
   }
 
   function fitFrame() {
-    const canvas = document.getElementById("canvas");
-    const frame = document.getElementById("ws-frame");
-    if (!frame) return;
-    const scale = Math.min(1, (canvas.clientWidth - 64) / 1080);
-    frame.style.transform = "scale(" + scale + ")";
-    frame.style.marginBottom = (scale < 1 ? -(1 - scale) * frame.offsetHeight : 0) + "px";
+    applyZoom();
   }
 
   /* ── Right spec: (Route/Uses first for workspace) + Colors/Size/Spacing ── */
