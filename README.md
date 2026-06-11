@@ -22,7 +22,7 @@ Instead of treating each screen as a one-off design, Design System Steward keeps
 ## Install
 
 ```bash
-npx skills add https://github.com/leeluse/ui-steward --skill design-system-steward
+npx skills add https://github.com/leeluse/design-system-steward --skill design-system-steward
 ```
 
 ## Repository structure
