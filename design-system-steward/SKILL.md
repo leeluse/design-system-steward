@@ -10,19 +10,17 @@ A living archive for designing and maintaining project UI. It consists of two sp
 - **Workspace**: A specific screen or page (e.g., `/dashboard`). The overall layout of a feature.
 - **Component**: Smaller reusable parts within a workspace (buttons, inputs, cards, etc.).
 
-Displays a list of Workspaces/Components on the left panel, a preview in the center (workspaces are scaled to fit within a 1080px frame), and specifications on the right panel (Colors / Sizes / Spacing + Route / Uses for Workspaces).
+Displays a list of Workspaces/Components on the left panel, a preview in the center (workspaces are scaled to fit within a 1440x900 frame), and specifications on the right panel (Colors / Sizes / Spacing + Route / Uses for Workspaces).
 
-## File Structure (Only 4 files)
+## File Structure (2 bundled files)
 
 ```
 /design-system-steward
-  archive.html    ← App shell. DO NOT modify.
-  archive.css     ← App styling. DO NOT modify.
-  archive.js      ← Engine. DO NOT modify.
-  components.js   ← ★ The ONLY active working file. Both workspaces and components are defined here.
+  components.js                        ← ★ The ONLY active working file. Both workspaces and components are defined here.
+  design-system-steward-preview.html   ← Self-contained preview shell with inline HTML/CSS/JS. Modify only for shell behavior.
 ```
 
-All 4 files exist in the bundled `assets/` directory. Copy them as-is when starting a new project. If an existing archive exists, append to its `components.js`.
+Both files exist in the bundled `assets/` directory. Copy them as-is when starting a new project. If an existing archive exists, append to its `components.js` and regenerate or update the preview HTML so it contains the latest registry.
 
 ## ★ Request Classification — Where to Start Designing (Highest Priority Rule)
 
@@ -75,7 +73,7 @@ Archive.add({
   html: `<div class="ws-dashboard-root"> ... <button class="btn-primary">Button</button> ... </div>`,
   spec: {
     colors:  { background: "#F8F9FB", "sidebar": "#FFFFFF" },
-    size:    { "frame": "1080px", "sidebar width": "220px" },
+    size:    { "frame": "1440x900", "sidebar width": "220px" },
     spacing: { "content padding": "24px", "card gap": "16px" }
   },
   note: "..."
@@ -155,9 +153,9 @@ When moving screens from an existing design spec HTML into the archive:
 
 `components.js` remains the default and primary working file. However, if the user asks for archive behavior that the current shell does not support, such as expandable workspace phases, visible metadata, navigation behavior, or rendering rules:
 
-- First state that the behavior requires updating `archive.js` and/or `archive.css`.
+- First state that the behavior requires updating the shell inside `design-system-steward-preview.html`.
 - Keep shell edits minimal and generic so future workspaces can reuse the behavior.
-- Do not modify `archive.html`, `archive.css`, or `archive.js` for ordinary screen/component additions.
+- Do not modify the shell HTML/CSS/JS inside `design-system-steward-preview.html` for ordinary screen/component additions.
 
 ## Encoding Safety Rules
 
@@ -206,10 +204,10 @@ Component Rules:
 
 ## Auto-Handled by the Engine (DO NOT implement yourself)
 
-The left side 2-section list (Workspaces → Components by category) & search, workspace 1080px frame rendering with auto-scaling to fit the window, automatic component CSS injection for `uses`, right-side specification panel (color swatches, Route, and interactive Uses links to jump to components), auto-extraction for missing specs, status indicators, and Alt-hover measurement tooltips.
+The left side 2-section list (Workspaces → Components by category) & search, workspace 1440x900 frame rendering with auto-scaling to fit the window, automatic component CSS injection for `uses`, right-side specification panel (color swatches, Route, and interactive Uses links to jump to components), auto-extraction for missing specs, status indicators, and Alt-hover measurement tooltips.
 
 ## Deliverables Delivery
 
-- Deliver both the folder (or zip) + **a single file for chat preview** (`archive-preview.html` with inline css/js of the 3 asset files).
+- Deliver both the folder (or zip) + **a single file for chat preview** (`design-system-steward-preview.html`, a self-contained HTML file with inline shell CSS/JS and registry data).
 - Even if only adding or modifying part of the code, deliver the entire `components.js` file (including all existing registrations) — accumulation is key.
 - If you design a new workspace, summarize the components that were extracted and registered separately in your response.

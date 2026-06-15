@@ -41,6 +41,43 @@ Archive.add({
   route: "/dashboard",
   status: "draft",
   uses: ["btn-primary"],
+  phases: [
+    {
+      id: "loading",
+      name: "Loading",
+      route: "/dashboard/loading",
+      html: `
+        <div class="ws-dashboard-root">
+          <h2 class="ws-title">Loading dashboard</h2>
+          <p class="ws-desc">Preparing workspace data...</p>
+        </div>
+      `,
+      spec: {
+        colors: {},
+        size: { phase: "loading" },
+        spacing: {}
+      },
+      note: "Route-level loading phase."
+    },
+    {
+      id: "empty",
+      name: "Empty",
+      route: "/dashboard/empty",
+      html: `
+        <div class="ws-dashboard-root">
+          <h2 class="ws-title">No dashboard data</h2>
+          <p class="ws-desc">Use this phase when the workspace has no records yet.</p>
+          <button class="btn-primary">Create first item</button>
+        </div>
+      `,
+      spec: {
+        colors: {},
+        size: { phase: "empty" },
+        spacing: {}
+      },
+      note: "Route-level empty phase."
+    }
+  ],
   css: `
     .ws-dashboard-root {
       padding: 40px;
@@ -50,7 +87,7 @@ Archive.add({
       gap: 20px;
       align-items: center;
       justify-content: center;
-      height: 640px;
+      min-height: 900px;
     }
     body.dark .ws-dashboard-root {
       background: #1f2937;
@@ -83,7 +120,7 @@ Archive.add({
   `,
   spec: {
     colors: { background: "#f3f4f6", title: "#111827", text: "#4b5563" },
-    size: { frame: "1080px", height: "640px" },
+    size: { frame: "1440x900", height: "900px" },
     spacing: { padding: "40px", gap: "20px" }
   },
   note: "A sample workspace showing scaling and assembly."

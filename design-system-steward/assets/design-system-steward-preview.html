@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- ============================================================
+  archive.html — UI Steward archive app
+============================================================ -->
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Design System Steward</title>
+  <style>
+/* archive.css — Design System Steward shell styles. */
+
+:root {
+  --bg-app: #ffffff;
+  --bg-sidebar: #fbfbfc;
+  --bg-inspect: #fbfbfc;
+  --bg-canvas: #ffffff;
+  --color-text: #1f2937;
+  --color-muted: #9aa1ad;
+  --color-secondary: #6b7280;
+  --border-color: #e4e7ec;
+  --input-bg: #ffffff;
+  --input-border: #e4e7ec;
+  --input-focus: #93c5fd;
+  --list-hover: #f1f3f6;
+  --list-active-bg: #eff6ff;
+  --list-active-text: #1d4ed8;
+  --canvas-grid: #e4e7ec;
+  --canvas-frame-bg: #ffffff;
+  --canvas-frame-border: #e4e7ec;
+  --canvas-frame-shadow: rgba(16, 24, 40, .08);
+  --badge-draft-bg: #fefce8;
+  --badge-draft-text: #854d0e;
+  --badge-ready-bg: #f0fdf4;
+  --badge-ready-text: #16a34a;
+}
+
+body.dark {
+  --bg-app: #0f172a;
+  --bg-sidebar: #1e293b;
+  --bg-inspect: #1e293b;
+  --bg-canvas: #0f172a;
+  --color-text: #f8fafc;
+  --color-muted: #64748b;
+  --color-secondary: #94a3b8;
+  --border-color: #334155;
+  --input-bg: #0f172a;
+  --input-border: #334155;
+  --input-focus: #3b82f6;
+  --list-hover: #334155;
+  --list-active-bg: #1e3a8a;
+  --list-active-text: #60a5fa;
+  --canvas-grid: #334155;
+  --canvas-frame-bg: #1e293b;
+  --canvas-frame-border: #334155;
+  --canvas-frame-shadow: rgba(0, 0, 0, 0.4);
+  --badge-draft-bg: #422006;
+  --badge-draft-text: #fef08a;
+  --badge-ready-bg: #064e3b;
+  --badge-ready-text: #86efac;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Pretendard", "Noto Sans KR", sans-serif;
+  font-size: 13px;
+  color: var(--color-text);
+  background: var(--bg-app);
+}
+
+.app {
+  display: grid;
+  grid-template-columns: 230px 1fr 250px;
+  height: 100vh;
+}
+
+/* ── Left Sidebar List ── */
+.sidebar {
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-sidebar);
+}
+
+.sidebar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 14px 8px;
+  font-size: 13px;
+}
+
+.sidebar-head .count {
+  color: var(--color-muted);
+  font-size: 11px;
+}
+
+.sidebar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.theme-toggle {
+  background: none;
+  border: none;
+  padding: 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-muted);
+  transition: background 0.2s, color 0.2s;
+}
+
+.theme-toggle:hover {
+  background: var(--list-hover);
+  color: var(--color-text);
+}
+
+.theme-toggle .sun-icon {
+  display: none;
+}
+.theme-toggle .moon-icon {
+  display: block;
+}
+
+body.dark .theme-toggle .sun-icon {
+  display: block;
+}
+body.dark .theme-toggle .moon-icon {
+  display: none;
+}
+
+.search {
+  margin: 0 10px 8px;
+  padding: 6px 10px;
+  font: inherit;
+  font-size: 12px;
+  background: var(--input-bg);
+  color: var(--color-text);
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+  outline: none;
+}
+
+.search:focus {
+  border-color: var(--input-focus);
+}
+
+.list {
+  overflow-y: auto;
+  flex: 1;
+  padding: 0 6px 12px;
+}
+
+.list .group {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  padding: 12px 8px 4px;
+}
+
+.list a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  text-decoration: none;
+  color: inherit;
+  font-size: 13px;
+}
+
+.list a:hover {
+  background: var(--list-hover);
+}
+
+.list a.active {
+  background: var(--list-active-bg);
+  color: var(--list-active-text);
+  font-weight: 500;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 99px;
+  flex-shrink: 0;
+}
+
+.dot[data-s="draft"] {
+  background: #eab308;
+}
+
+.dot[data-s="ready"] {
+  background: #22c55e;
+}
+
+/* ── Center Stage Canvas ── */
+.stage {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.stage-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.stage-head h1 {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.stage-head .hint {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--color-muted);
+}
+
+.badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 99px;
+}
+
+.badge[data-s="draft"] {
+  background: var(--badge-draft-bg);
+  color: var(--badge-draft-text);
+}
+
+.badge[data-s="ready"] {
+  background: var(--badge-ready-bg);
+  color: var(--badge-ready-text);
+}
+
+.canvas {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  background-color: var(--bg-canvas);
+  background-image: radial-gradient(var(--canvas-grid) 1px, transparent 1px);
+  background-size: 16px 16px;
+  background-position: center center;
+}
+
+.canvas-inner {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transform-origin: center center;
+  user-select: none;
+}
+
+/* ── Right Spec Panel ── */
+.inspect {
+  border-left: 1px solid var(--border-color);
+  overflow-y: auto;
+  padding: 14px;
+  background: var(--bg-inspect);
+}
+
+.inspect h3 {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  margin: 18px 0 8px;
+}
+
+.inspect h3:first-child {
+  margin-top: 0;
+}
+
+.spec-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 12px;
+}
+
+.spec-row .k {
+  color: var(--color-secondary);
+}
+
+.spec-row .v {
+  font-family: "SF Mono", ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--color-text);
+  text-align: right;
+}
+
+.swatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, .12);
+  vertical-align: -3px;
+  margin-right: 6px;
+}
+
+body.dark .swatch {
+  border-color: rgba(255, 255, 255, .15);
+}
+
+.empty {
+  color: var(--color-muted);
+  font-size: 12px;
+  padding: 8px 0;
+}
+
+/* ── Alt Spacing Measurement Tooltip ── */
+#measure-tip {
+  position: fixed;
+  z-index: 100;
+  pointer-events: none;
+  display: none;
+  background: #111827;
+  color: #fff;
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: pre;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .2);
+}
+
+body.dark #measure-tip {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+body.measuring .canvas * {
+  outline: 1px dashed rgba(239, 68, 68, .5);
+  outline-offset: -1px;
+}
+
+/* ── Workspace Frame (v2) ── */
+.canvas.ws {
+  align-items: flex-start;
+  justify-content: center;
+  padding: 32px;
+}
+
+.ws-frame {
+  width: 1440px;
+  min-height: 900px;
+  flex-shrink: 0;
+  background: var(--canvas-frame-bg);
+  border: 1px solid var(--canvas-frame-border);
+  border-radius: 10px;
+  box-shadow: var(--canvas-frame-shadow);
+  transform-origin: top center;
+  overflow: hidden;
+}
+
+.list .group.sub {
+  padding-left: 16px;
+  font-size: 9px;
+  color: var(--color-muted);
+  opacity: 0.7;
+}
+
+.list a.phase-item {
+  padding-left: 22px;
+  font-size: 12px;
+}
+
+.list a .twisty {
+  display: inline-flex;
+  width: 14px;
+  color: var(--color-muted);
+  cursor: pointer;
+  justify-content: center;
+}
+
+.list a .route {
+  font-style: normal;
+  font-size: 10px;
+  color: var(--color-muted);
+  margin-left: 4px;
+}
+
+.spec-row a.use-link {
+  color: var(--list-active-text);
+  text-decoration: none;
+  font-size: 12px;
+}
+
+.spec-row a.use-link:hover {
+  text-decoration: underline;
+}
+
+  </style>
+</head>
+
+<body>
+  <script>
+    (function () {
+      const theme = localStorage.getItem("theme") || "light";
+      if (theme === "dark") {
+        document.body.classList.add("dark");
+      }
+    })();
+  </script>
+  <div class="app">
+    <!-- Left: Workspaces / Components list -->
+    <aside class="sidebar">
+      <div class="sidebar-head">
+        <strong>Design System Steward</strong>
+        <div class="sidebar-actions">
+          <span class="count" id="count"></span>
+          <button id="theme-toggle" class="theme-toggle" title="Toggle dark mode" aria-label="Toggle dark mode">
+            <svg class="sun-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+            <svg class="moon-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+          </button>
+        </div>
+      </div>
+      <input class="search" id="search" type="text" placeholder="Search..." />
+      <nav class="list" id="list"></nav>
+    </aside>
+
+    <!-- Center: Preview canvas -->
+    <main class="stage">
+      <div class="stage-head">
+        <h1 id="comp-name"></h1>
+        <span class="badge" id="comp-status"></span>
+        <span class="hint">Alt+Hover = Measure · Drag = Pan · Ctrl+Scroll = Zoom</span>
+      </div>
+      <div class="canvas" id="canvas">
+        <div class="canvas-inner" id="canvas-inner"></div>
+      </div>
+    </main>
+
+    <!-- Right: Spec (colors / size / spacing) -->
+    <aside class="inspect" id="inspect"></aside>
+  </div>
+
+  <script>
+/* ============================================================
+   archive.js — Design System Steward archive engine v2. No modification needed.
+   Two spaces: type "workspace" (screen) | "component" (part)
+   Simply register using Archive.add({...}) in components.js.
+   ============================================================ */
+(function () {
+  "use strict";
+  const items = [];
+  let current = null;
+  let currentPhase = null;
+  const expandedWorkspaces = new Set();
+  let zoomMode = "fit";
+  let zoomLevel = 1.0;
+  const zoomLevels = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
+  let panX = 0;
+  let panY = 0;
+  let isDragging = false;
+  let startX = 0;
+  let startY = 0;
+
+  window.Archive = { add: function (c) { c.type = c.type || "component"; items.push(c); } };
+
+  document.addEventListener("DOMContentLoaded", function () {
+    renderList("");
+    document.getElementById("search").addEventListener("input", function (e) {
+      renderList(e.target.value.trim().toLowerCase());
+    });
+    const firstWs = items.find(function (x) { return x.type === "workspace"; });
+    if (firstWs) select(firstWs.id); else if (items.length) select(items[0].id);
+    setupMeasure();
+    const toggleBtn = document.getElementById("theme-toggle");
+    if (toggleBtn) {
+      toggleBtn.addEventListener("click", function () {
+        const isDark = document.body.classList.toggle("dark");
+        localStorage.setItem("theme", isDark ? "dark" : "light");
+      });
+    }
+
+
+
+    const canvas = document.getElementById("canvas");
+    if (canvas) {
+      canvas.style.cursor = "grab";
+      canvas.addEventListener("mousedown", function (e) {
+        if (e.button !== 0) return;
+        if (e.target.closest("button, a, input, select, textarea")) return;
+        isDragging = true;
+        startX = e.clientX - panX;
+        startY = e.clientY - panY;
+        canvas.style.cursor = "grabbing";
+      });
+
+      window.addEventListener("mousemove", function (e) {
+        if (!isDragging) return;
+        panX = e.clientX - startX;
+        panY = e.clientY - startY;
+        applyZoom();
+      });
+
+      window.addEventListener("mouseup", function () {
+        if (isDragging) {
+          isDragging = false;
+          canvas.style.cursor = "grab";
+        }
+      });
+
+      canvas.addEventListener("wheel", function (e) {
+        if (!e.ctrlKey) return;
+        e.preventDefault();
+        const zoomFactor = 1.1;
+        if (e.deltaY < 0) {
+          if (zoomMode === "fit") {
+            zoomLevel = getAutoScale();
+            zoomMode = "manual";
+          }
+          zoomLevel = Math.min(2.0, zoomLevel * zoomFactor);
+        } else {
+          if (zoomMode === "fit") {
+            zoomLevel = getAutoScale();
+            zoomMode = "manual";
+          }
+          zoomLevel = Math.max(0.2, zoomLevel / zoomFactor);
+        }
+        applyZoom();
+      }, { passive: false });
+    }
+
+    window.addEventListener("resize", function () { if (current && current.type === "workspace") fitFrame(); });
+  });
+
+  /* ── Left list: Workspaces section → Components section (grouped by category) ── */
+  function renderList(q) {
+    const nav = document.getElementById("list");
+    nav.innerHTML = "";
+    const match = function (c) {
+      const phaseMatch = (c.phases || []).some(function (p) {
+        return p.name.toLowerCase().includes(q) || p.id.toLowerCase().includes(q) || (p.route || "").toLowerCase().includes(q);
+      });
+      return !q || c.name.toLowerCase().includes(q) || (c.category || "").toLowerCase().includes(q) || (c.route || "").toLowerCase().includes(q) || phaseMatch;
+    };
+    const ws = items.filter(function (c) { return c.type === "workspace" && match(c); });
+    const comps = items.filter(function (c) { return c.type === "component" && match(c); });
+    document.getElementById("count").textContent = ws.length + " ws · " + comps.length + " comp";
+
+    if (ws.length) {
+      nav.appendChild(groupEl("Workspaces"));
+      ws.forEach(function (c) {
+        nav.appendChild(itemEl(c, c.route || ""));
+        if (c.phases && c.phases.length && (expandedWorkspaces.has(c.id) || q)) {
+          c.phases.forEach(function (p) {
+            nav.appendChild(phaseItemEl(c, p));
+          });
+        }
+      });
+    }
+    if (comps.length) {
+      nav.appendChild(groupEl("Components"));
+      const groups = {};
+      comps.forEach(function (c) { const g = c.category || "Etc"; (groups[g] = groups[g] || []).push(c); });
+      Object.keys(groups).sort().forEach(function (g) {
+        const sub = groupEl(g); sub.classList.add("sub"); nav.appendChild(sub);
+        groups[g].forEach(function (c) { nav.appendChild(itemEl(c, "")); });
+      });
+    }
+  }
+
+  function groupEl(t) { const d = document.createElement("div"); d.className = "group"; d.textContent = t; return d; }
+
+  function itemEl(c, sub) {
+    const a = document.createElement("a");
+    a.href = "#" + c.id; a.dataset.id = c.id;
+    if (current && current.id === c.id && !currentPhase) a.className = "active";
+    const hasPhases = c.type === "workspace" && c.phases && c.phases.length;
+    const twisty = hasPhases ? '<span class="twisty" data-toggle="' + esc(c.id) + '">' + (expandedWorkspaces.has(c.id) ? "▾" : "▸") + "</span>" : "";
+    a.innerHTML = "<span>" + twisty + esc(c.name) + (sub ? ' <em class="route">' + esc(sub) + "</em>" : "") +
+      '</span><span class="dot" data-s="' + (c.status || "draft") + '"></span>';
+    a.addEventListener("click", function (e) {
+      e.preventDefault();
+      if (e.target && e.target.dataset && e.target.dataset.toggle) {
+        toggleWorkspace(e.target.dataset.toggle);
+        return;
+      }
+      select(c.id);
+    });
+    return a;
+  }
+
+  function phaseItemEl(parent, phase) {
+    const a = document.createElement("a");
+    const key = parent.id + "::" + phase.id;
+    a.href = "#" + key;
+    a.dataset.id = key;
+    a.className = "phase-item" + (current && current.id === parent.id && currentPhase && currentPhase.id === phase.id ? " active" : "");
+    a.innerHTML = '<span>' + esc(phase.name || phase.id) + (phase.route ? ' <em class="route">' + esc(phase.route) + "</em>" : "") +
+      '</span><span class="dot" data-s="' + (parent.status || "draft") + '"></span>';
+    a.addEventListener("click", function (e) { e.preventDefault(); select(key); });
+    return a;
+  }
+
+  function toggleWorkspace(id) {
+    if (expandedWorkspaces.has(id)) expandedWorkspaces.delete(id);
+    else expandedWorkspaces.add(id);
+    const q = document.getElementById("search").value.trim().toLowerCase();
+    renderList(q);
+  }
+
+  /* ── Select → Render canvas + spec ── */
+  function select(id) {
+    const parts = String(id).split("::");
+    const c = items.find(function (x) { return x.id === parts[0]; });
+    if (!c) return;
+    current = c;
+    currentPhase = parts[1] && c.phases ? c.phases.find(function (p) { return p.id === parts[1]; }) : null;
+    if (currentPhase) expandedWorkspaces.add(c.id);
+
+    // Reset panning and zoom level on selecting a new item
+    panX = 0;
+    panY = 0;
+    zoomMode = "fit";
+    const canvas = document.getElementById("canvas");
+    if (canvas) {
+      canvas.style.backgroundPosition = "center center";
+    }
+
+    renderList(document.getElementById("search").value.trim().toLowerCase());
+    document.querySelectorAll(".list a").forEach(function (a) { a.classList.toggle("active", a.dataset.id === id); });
+    const activeRoute = currentPhase ? currentPhase.route : c.route;
+    document.getElementById("comp-name").textContent = c.name + (currentPhase ? " · " + currentPhase.name : "") + (activeRoute ? "  ·  " + activeRoute : "");
+    const badge = document.getElementById("comp-status");
+    badge.textContent = c.status || "draft"; badge.dataset.s = c.status || "draft";
+
+    const canvasEl = document.getElementById("canvas");
+    canvasEl.classList.toggle("ws", c.type === "workspace");
+
+    const canvasInner = document.getElementById("canvas-inner");
+    if (!canvasInner) return;
+
+    if (c.type === "workspace") {
+      /* Inject CSS of components registered in 'uses' → Workspace 'assembles' components */
+      const usedCss = (c.uses || []).map(function (uid) {
+        const u = items.find(function (x) { return x.id === uid; });
+        return u ? u.css : "";
+      }).join("\n");
+      const phaseCss = currentPhase && currentPhase.css ? currentPhase.css : "";
+      const activeHtml = currentPhase && currentPhase.html ? currentPhase.html : c.html;
+      canvasInner.innerHTML = '<div class="ws-frame" id="ws-frame"><style>' + usedCss + (c.css || "") + phaseCss + "</style>" + activeHtml + "</div>";
+      fitFrame();
+    } else {
+      canvasInner.innerHTML = "<style>" + (c.css || "") + "</style>" + c.html;
+      fitFrame();
+    }
+    renderSpec(c, canvasInner, currentPhase);
+  }
+
+  function getAutoScale() {
+    const canvas = document.getElementById("canvas");
+    if (!canvas) return 1.0;
+    const frame = document.getElementById("ws-frame");
+    if (!frame) return 1.0;
+    const frameWidth = frame.offsetWidth;
+    const frameHeight = frame.offsetHeight;
+    const scaleX = (canvas.clientWidth - 64) / frameWidth;
+    const scaleY = (canvas.clientHeight - 64) / frameHeight;
+    return Math.min(1, scaleX, scaleY);
+  }
+
+  function applyZoom() {
+    const canvas = document.getElementById("canvas");
+    const inner = document.getElementById("canvas-inner");
+    if (!inner) return;
+
+    let scale = 1.0;
+    if (zoomMode === "fit") {
+      scale = getAutoScale();
+    } else {
+      scale = zoomLevel;
+    }
+
+    inner.style.transform = "translate(-50%, -50%) translate(" + panX + "px, " + panY + "px) scale(" + scale + ")";
+
+    if (canvas) {
+      canvas.style.backgroundPosition = "calc(50% + " + panX + "px) calc(50% + " + panY + "px)";
+    }
+  }
+
+  function fitFrame() {
+    applyZoom();
+  }
+
+  /* ── Right spec: (Route/Uses first for workspace) + Colors/Size/Spacing ── */
+  function renderSpec(c, canvas, phase) {
+    const root = firstElement(canvas.querySelector(".ws-frame") || canvas);
+    const auto = autoExtract(root);
+    const phaseSpec = phase && phase.spec ? phase.spec : {};
+    const merged = {
+      colors: Object.assign({}, auto.colors, (c.spec || {}).colors, phaseSpec.colors),
+      size: Object.assign({}, auto.size, (c.spec || {}).size, phaseSpec.size),
+      spacing: Object.assign({}, auto.spacing, (c.spec || {}).spacing, phaseSpec.spacing)
+    };
+    const panel = document.getElementById("inspect");
+    let html = "";
+    if (c.type === "workspace") {
+      if (phase) {
+        html += '<h3>Phase</h3><div class="spec-row"><span class="k">' + esc(phase.name || phase.id) + '</span><span class="v">' + esc(phase.id) + "</span></div>";
+      } else if (c.phases && c.phases.length) {
+        html += "<h3>Phases</h3>";
+        c.phases.forEach(function (p) {
+          html += '<div class="spec-row"><a href="#" class="use-link" data-id="' + esc(c.id + "::" + p.id) + '">' + esc(p.name || p.id) + "</a></div>";
+        });
+      }
+      html += '<h3>Route</h3><div class="spec-row"><span class="v">' + esc((phase && phase.route) || c.route || "—") + "</span></div>";
+      html += "<h3>Uses</h3>";
+      if (c.uses && c.uses.length) {
+        c.uses.forEach(function (uid) {
+          const u = items.find(function (x) { return x.id === uid; });
+          html += '<div class="spec-row"><a href="#" class="use-link" data-id="' + esc(uid) + '">' +
+            esc(u ? u.name : uid) + "</a>" +
+            (u ? '<span class="dot" data-s="' + (u.status || "draft") + '"></span>' : "") + "</div>";
+        });
+      } else html += '<div class="empty">—</div>';
+    } else if (c.workspace) {
+      const w = items.find(function (x) { return x.id === c.workspace; });
+      html += '<h3>Workspace</h3><div class="spec-row"><a href="#" class="use-link" data-id="' + esc(c.workspace) + '">' +
+        esc(w ? w.name : c.workspace) + "</a></div>";
+    }
+    html += section("Colors", merged.colors, true) + section("Size", merged.size, false) +
+      section("Padding · Margin", merged.spacing, false) +
+      (c.note ? '<h3>Note</h3><div class="empty" style="color:#6b7280">' + esc(c.note) + "</div>" : "");
+    panel.innerHTML = html;
+    panel.querySelectorAll(".use-link").forEach(function (a) {
+      a.addEventListener("click", function (e) { e.preventDefault(); select(a.dataset.id); });
+    });
+  }
+
+  function section(title, obj, isColor) {
+    let rows = "";
+    for (const k in obj) {
+      const v = obj[k];
+      if (v == null || v === "") continue;
+      rows += '<div class="spec-row"><span class="k">' + esc(k) + '</span><span class="v">' +
+        (isColor ? '<span class="swatch" style="background:' + esc(v) + '"></span>' : "") + esc(v) + "</span></div>";
+    }
+    return "<h3>" + title + "</h3>" + (rows || '<div class="empty">—</div>');
+  }
+
+  function autoExtract(el) {
+    if (!el) return { colors: {}, size: {}, spacing: {} };
+    const cs = getComputedStyle(el);
+    return {
+      colors: {
+        background: toHex(cs.backgroundColor), text: toHex(cs.color),
+        border: cs.borderWidth !== "0px" ? toHex(cs.borderColor) : null
+      },
+      size: {
+        width: el.offsetWidth + "px", height: el.offsetHeight + "px",
+        radius: cs.borderRadius, font: cs.fontSize + " / " + cs.fontWeight
+      },
+      spacing: {
+        padding: shorthand(cs.paddingTop, cs.paddingRight, cs.paddingBottom, cs.paddingLeft),
+        margin: shorthand(cs.marginTop, cs.marginRight, cs.marginBottom, cs.marginLeft),
+        gap: cs.gap && cs.gap !== "normal" ? cs.gap : null
+      }
+    };
+  }
+
+  function shorthand(t, r, b, l) {
+    if (t === r && r === b && b === l) return t;
+    if (t === b && r === l) return t + " " + r;
+    return t + " " + r + " " + b + " " + l;
+  }
+
+  function toHex(rgb) {
+    const m = rgb && rgb.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+    if (!m) return rgb;
+    if (m[4] !== undefined && parseFloat(m[4]) === 0) return null;
+    const hex = "#" + [m[1], m[2], m[3]].map(function (x) { return (+x).toString(16).padStart(2, "0"); }).join("").toUpperCase();
+    return m[4] !== undefined && parseFloat(m[4]) < 1 ? hex + " / " + Math.round(parseFloat(m[4]) * 100) + "%" : hex;
+  }
+
+  function firstElement(box) {
+    for (const n of box.children) if (n.tagName !== "STYLE") return n;
+    return null;
+  }
+
+  function setupMeasure() {
+    const tip = document.createElement("div");
+    tip.id = "measure-tip"; document.body.appendChild(tip);
+    document.addEventListener("keydown", function (e) { if (e.key === "Alt") document.body.classList.add("measuring"); });
+    document.addEventListener("keyup", function (e) {
+      if (e.key === "Alt") { document.body.classList.remove("measuring"); tip.style.display = "none"; }
+    });
+    document.addEventListener("mousemove", function (e) {
+      if (!document.body.classList.contains("measuring")) return;
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      if (!el || !el.closest(".canvas") || el.classList.contains("canvas")) { tip.style.display = "none"; return; }
+      const r = el.getBoundingClientRect(); const cs = getComputedStyle(el);
+      tip.textContent = Math.round(r.width) + " × " + Math.round(r.height) + "\n" +
+        "pad " + shorthand(cs.paddingTop, cs.paddingRight, cs.paddingBottom, cs.paddingLeft) + "\n" +
+        "mar " + shorthand(cs.marginTop, cs.marginRight, cs.marginBottom, cs.marginLeft);
+      tip.style.display = "block";
+      tip.style.left = e.clientX + 14 + "px"; tip.style.top = e.clientY + 14 + "px";
+    });
+  }
+
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+    });
+  }
+})();
+
+  </script>
+  <script>
+/* ============================================================
+   components.js — Design System Steward registry
+   ★ All component additions, modifications, and deletions are done ONLY in this file ★
+
+   Harness Rules:
+   1. 1 Component = 1 Archive.add({...}) block
+   2. Required fields: id, name, category, status, css, html
+   3. Spec keys must be grouped into exactly three categories: colors, size, and spacing.
+      (Though auto-extracted if omitted, specifying intended values explicitly is recommended)
+   4. CSS class names must be prefixed with the component id (to prevent collisions)
+   ============================================================ */
+
+Archive.add({
+  id: "btn-primary",
+  name: "Primary Button",
+  category: "Button",
+  status: "draft", // draft | ready
+  css: `
+    .btn-primary {
+      display: inline-flex; align-items: center; justify-content: center;
+      height: 36px; padding: 0 16px;
+      background: #2563EB; color: #FFFFFF;
+      font-size: 14px; font-weight: 500;
+      border: none; border-radius: 6px; cursor: pointer;
+    }
+    .btn-primary:hover { background: #1D4ED8; }
+  `,
+  html: `<button class="btn-primary">Button</button>`,
+  spec: {
+    colors: { background: "#2563EB", text: "#FFFFFF", hover: "#1D4ED8" },
+    size: { height: "36px", radius: "6px", font: "14px / 500" },
+    spacing: { padding: "0 16px", margin: "0" }
+  },
+  note: "For primary actions. Max 1 per screen rule."
+});
+
+Archive.add({
+  type: "workspace",
+  id: "ws-dashboard",
+  name: "Sample Dashboard",
+  route: "/dashboard",
+  status: "draft",
+  uses: ["btn-primary"],
+  phases: [
+    {
+      id: "loading",
+      name: "Loading",
+      route: "/dashboard/loading",
+      html: `
+        <div class="ws-dashboard-root">
+          <h2 class="ws-title">Loading dashboard</h2>
+          <p class="ws-desc">Preparing workspace data...</p>
+        </div>
+      `,
+      spec: {
+        colors: {},
+        size: { phase: "loading" },
+        spacing: {}
+      },
+      note: "Route-level loading phase."
+    },
+    {
+      id: "empty",
+      name: "Empty",
+      route: "/dashboard/empty",
+      html: `
+        <div class="ws-dashboard-root">
+          <h2 class="ws-title">No dashboard data</h2>
+          <p class="ws-desc">Use this phase when the workspace has no records yet.</p>
+          <button class="btn-primary">Create first item</button>
+        </div>
+      `,
+      spec: {
+        colors: {},
+        size: { phase: "empty" },
+        spacing: {}
+      },
+      note: "Route-level empty phase."
+    }
+  ],
+  css: `
+    .ws-dashboard-root {
+      padding: 40px;
+      background: #f3f4f6;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      align-items: center;
+      justify-content: center;
+      min-height: 900px;
+    }
+    body.dark .ws-dashboard-root {
+      background: #1f2937;
+    }
+    .ws-title {
+      font-size: 24px;
+      font-weight: bold;
+      color: #111827;
+      margin: 0;
+    }
+    body.dark .ws-title {
+      color: #f3f4f6;
+    }
+    .ws-desc {
+      font-size: 14px;
+      color: #4b5563;
+      margin: 0;
+      text-align: center;
+    }
+    body.dark .ws-desc {
+      color: #9ca3af;
+    }
+  `,
+  html: `
+    <div class="ws-dashboard-root">
+      <h2 class="ws-title">Design System Workspace</h2>
+      <p class="ws-desc">This is a live preview of a workspace. You can use the zoom controls in the header to scale this frame.</p>
+      <button class="btn-primary">Dashboard Action</button>
+    </div>
+  `,
+  spec: {
+    colors: { background: "#f3f4f6", title: "#111827", text: "#4b5563" },
+    size: { frame: "1440x900", height: "900px" },
+    spacing: { padding: "40px", gap: "20px" }
+  },
+  note: "A sample workspace showing scaling and assembly."
+});
+
+  </script>
+</body>
+
+</html>
